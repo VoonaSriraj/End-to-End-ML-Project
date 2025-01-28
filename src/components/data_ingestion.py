@@ -10,10 +10,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 # Importing necessary modules from src
 from src.exception import CustomException
 from src.logger import logging
-# from src.components.data_transformation import DataTransformation
-# from src.components.data_transformation import DataTransformationConfig
-# from src.components.model_trainer import ModelTrainerConfig
+from src.components.data_transformation import DataTransformation
+from src.components.data_transformation import DataTransformationConfig
 # from src.components.model_trainer import ModelTrainer
+# from src.components.model_trainer import ModelTrainerConfig
+
 
 @dataclass
 class DataIngestionConfig:
@@ -29,8 +30,13 @@ class DataIngestion:
     def initiate_data_ingestion(self):
         logging.info("Entered the data ingestion method or component")
         try:
+            # Check if the file exists before reading it
+            data_path = 'notebook/data/stud.csv'
+            if not os.path.exists(data_path):
+                raise FileNotFoundError(f"Data file {data_path} not found.")
+
             # Load the dataset
-            df = pd.read_csv('notebook/data/stud.csv')
+            df = pd.read_csv(data_path)
             logging.info('Read the dataset as a dataframe')
 
             # Create artifacts directory if it doesn't exist
@@ -58,14 +64,21 @@ class DataIngestion:
 
 
 if __name__ == "__main__":
-    # Data ingestion
-    obj = DataIngestion()
-    train_data, test_data = obj.initiate_data_ingestion()
+    try:
+        # Data ingestion
+        obj = DataIngestion()
+        train_data, test_data = obj.initiate_data_ingestion()
 
-    # # Data transformation
-    # data_transformation = DataTransformation()
-    # train_arr, test_arr, _ = data_transformation.initiate_data_transformation(train_data, test_data)
+        # Data transformation
+        data_transformation = DataTransformation()
+        train_arr, test_arr = data_transformation.initiate_data_transformation(train_data, test_data)
 
-    # # Model training
-    # model_trainer = ModelTrainer()
-    # print(model_trainer.initiate_model_trainer(train_arr, test_arr))
+        # Model training
+        model_trainer = ModelTrainer(ModelTrainerConfig())  # Ensure ModelTrainerConfig is passed correctly
+        model_trainer_result = model_trainer.initiate_model_trainer(train_arr, test_arr)
+        print(model_trainer_result)
+
+    except FileNotFoundError as fnf_error:
+        logging.error(fnf_error)
+    except Exception as e:
+        logging.error(f"Error occurred: {e}")
