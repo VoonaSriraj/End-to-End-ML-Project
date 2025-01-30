@@ -1,22 +1,24 @@
 import sys
-from src.logger import logging
-
-def error_message_detail(error: Exception, error_detail: sys) -> str:
-    exc_type, exc_obj, exc_tb = error_detail.exc_info()
-    if exc_tb is None:
-        return f"Error occurred: {str(error)}"
-    
-    file_name = exc_tb.tb_frame.f_code.co_filename
-    error_message = "Error occurred in python script name [{0}] line number [{1}] error message [{2}]".format(
-        file_name, exc_tb.tb_lineno, str(error)
-    )
-    logging.error(error_message)  # Log the error
-    return error_message
 
 class CustomException(Exception):
-    def __init__(self, error_message: str, error_detail: sys):
+    def __init__(self, error_message, error_detail: sys):
+        # Initialize the base Exception class with the error message
         super().__init__(error_message)
-        self.error_message = error_message_detail(error_message, error_detail=error_detail)
-    
-    def __str__(self) -> str:
+        self.error_message = CustomException.get_detailed_error_message(error_message, error_detail)
+
+    @staticmethod
+    def get_detailed_error_message(error_message, error_detail):
+        # Extract exception info
+        exc_type, exc_value, exec_tb = sys.exc_info()
+
+        if exec_tb is None:
+            return f"Error: {error_message}"  # Handle cases where traceback is not available
+
+        # Extract the file name and line number from the traceback object
+        file_name = exec_tb.tb_frame.f_code.co_filename
+        line_number = exec_tb.tb_lineno
+        
+        return f"Error in file [{file_name}], line [{line_number}]: {error_message}"
+
+    def __str__(self):
         return self.error_message
